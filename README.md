@@ -272,7 +272,19 @@ make run-client
 
 ---
 
-# Step 3 — Enter Username
+# Step 3 — Enter Server IP
+
+The client dynamically asks for the server IP.
+
+Example:
+
+```text
+Enter Server IP: 192.168.1.5
+```
+
+---
+
+# Step 4 — Enter Username
 
 Example:
 
@@ -289,7 +301,7 @@ To use this project on multiple devices:
 - connect all devices to same WiFi
 - run server on one device
 - run client on other devices
-- ensure all clients use the server machine IP
+- clients must enter the server machine IP
 
 ---
 
@@ -307,27 +319,38 @@ Example:
 192.168.1.5
 ```
 
+This is the IP address clients should enter while connecting.
+
 ---
 
-# Configure Server IP in client.c
+# Why Dynamic IP Input Is Used
 
-Inside `client.c`:
+Instead of hardcoding the server IP inside `client.c`,
+the client accepts IP dynamically during runtime.
 
-```c
-inet_pton(AF_INET, "192.168.1.5", &serv_addr.sin_addr);
-```
+Advantages:
+- no recompilation required
+- same executable works everywhere
+- easier LAN testing
+- supports future internet/VPS/ngrok connectivity
+- more realistic client-server architecture
 
-Replace:
+---
+
+# Connection Flow
+
 ```text
-192.168.1.5
-```
-
-with your actual server IP.
-
-Then rebuild project:
-
-```bash
-make
+Client Starts
+      ↓
+User Enters Server IP
+      ↓
+Client Creates Socket
+      ↓
+Client Connects To Server
+      ↓
+Username Sent To Server
+      ↓
+Real-Time Communication Starts
 ```
 
 ---
@@ -499,6 +522,21 @@ After building this project, concepts learned include:
 - how select() multiplexing works
 - how client-server systems communicate
 - how concurrent networking systems are designed
+
+---
+
+# Interview Topics Covered
+
+This project helps strengthen understanding of:
+- TCP vs UDP
+- File Descriptors
+- select()
+- Client-Server Architecture
+- Linux System Calls
+- Socket Programming
+- Concurrent Client Handling
+- Networking Fundamentals
+- Real-Time Communication
 
 ---
 
