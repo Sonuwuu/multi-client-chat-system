@@ -1,32 +1,43 @@
 # TCP Chat System in C
 
-A simple multi-client terminal based chat application built using **C Socket Programming** and `select()` system call.
+A multi-client terminal based chat application developed using **C Socket Programming** and **TCP connections**.
 
-This project allows multiple users to connect to a central server and chat with each other in real time over a local network (same WiFi/LAN).
+The project allows multiple users connected on the same WiFi/LAN network to communicate with each other in real time using a centralized server.
+
+The application demonstrates:
+- Socket Programming
+- TCP Communication
+- Linux System Calls
+- Client-Server Architecture
+- I/O Multiplexing using `select()`
+- Multi-client handling without multithreading
 
 ---
 
-# Features
+# Project Features
 
 - Multi-client chat system
 - Real-time messaging
+- Public chat
 - Private messaging support
 - Join/Disconnect notifications
-- Timestamps for messages
+- Timestamp based messages
 - Colored terminal output
-- Dynamic server IP input
-- Supports multiple devices on same WiFi
-- Uses `select()` for handling multiple clients without threads
+- Concurrent client handling using `select()`
+- Dynamic client communication
+- Linux terminal based application
+- Makefile support for easy compilation
 
 ---
 
 # Technologies Used
 
 - C Programming
-- TCP Sockets
-- Linux System Calls
-- `select()` for multiplexing
-- Socket Programming APIs
+- TCP/IP Networking
+- Linux Socket APIs
+- POSIX System Calls
+- `select()` System Call
+- Makefile
 
 ---
 
@@ -37,6 +48,7 @@ chat_system/
 │
 ├── server.c
 ├── client.c
+├── Makefile
 ├── README.md
 ```
 
@@ -49,7 +61,7 @@ Before running the project make sure you have:
 - GCC Compiler
 - Linux / Ubuntu / WSL
 - Basic terminal knowledge
-- Multiple devices connected to same WiFi (optional for LAN chat)
+- Multiple devices connected to same WiFi (for LAN chat)
 
 ---
 
@@ -70,16 +82,20 @@ gcc --version
 
 ---
 
-# How It Works
+# Understanding Project Architecture
 
-## Server
+The project follows a **Client-Server Architecture**.
+
+## Server Responsibilities
 
 The server:
-- listens for incoming client connections
-- accepts multiple users
+- creates a TCP socket
+- binds socket to a port
+- listens for incoming connections
+- accepts multiple clients
 - broadcasts messages
 - handles private messages
-- detects disconnects
+- detects client disconnections
 
 The server uses:
 
@@ -87,72 +103,180 @@ The server uses:
 select()
 ```
 
-to monitor:
-- new connections
-- incoming client messages
-
-without creating multiple threads.
+to monitor multiple sockets simultaneously without using threads.
 
 ---
 
-## Client
+## Client Responsibilities
 
 The client:
 - connects to server
 - sends messages
 - receives messages
 - supports private messaging
-- shows colored messages
+- displays colored outputs
+- handles real-time communication
 
 ---
 
-# Compile the Project
+# Socket Flow
 
-## Compile Server
+The project internally follows this socket flow:
 
-```bash
-gcc server.c -o server
+```text
+socket()
+   ↓
+bind()
+   ↓
+listen()
+   ↓
+accept()
+   ↓
+send()/read()
+   ↓
+close()
 ```
 
 ---
 
-## Compile Client
+# Important Concepts Used
+
+## TCP Protocol
+
+TCP is used because it provides:
+- reliable communication
+- ordered packet delivery
+- retransmission of lost packets
+- connection-oriented communication
+
+---
+
+## select() System Call
+
+The server uses:
+
+```c
+select()
+```
+
+to handle multiple clients simultaneously.
+
+It monitors:
+- new client connections
+- incoming client messages
+
+without multithreading.
+
+---
+
+## File Descriptors
+
+Sockets in Linux are represented as:
+- file descriptors
+
+This allows:
+- `select()`
+- `read()`
+- `write()`
+
+to work on sockets like normal files.
+
+---
+
+# Compile the Project Using Makefile
+
+## Build Server and Client
 
 ```bash
-gcc client.c -o client
+make
+```
+
+This automatically compiles:
+- server.c
+- client.c
+
+---
+
+# Makefile Commands
+
+## Compile Project
+
+```bash
+make
 ```
 
 ---
 
-# Running on Same System
-
-## Step 1 — Start Server
+## Run Server
 
 ```bash
-./server
+make run-server
+```
+
+---
+
+## Run Client
+
+```bash
+make run-client
+```
+
+---
+
+## Remove Executables
+
+```bash
+make clean
+```
+
+This removes:
+- server
+- client
+
+executables.
+
+---
+
+# Running the Project
+
+# Step 1 — Start Server
+
+Run:
+
+```bash
+make run-server
 ```
 
 Example output:
 
 ```text
-Server IP   : 127.0.0.1
+=====================================
+ Chat Server Started Successfully
+=====================================
+
+Server IP   : 192.168.1.5
 Server Port : 8080
+
+Waiting for clients...
 ```
 
 ---
 
-## Step 2 — Start Client
+# Step 2 — Start Client
 
 Open another terminal:
 
 ```bash
-./client
+make run-client
 ```
 
-Enter:
+---
+
+# Step 3 — Enter Username
+
+Example:
 
 ```text
-Enter Server IP: 127.0.0.1
 Enter Name: sonu
 ```
 
@@ -160,63 +284,75 @@ Enter Name: sonu
 
 # Running on Same WiFi / LAN
 
-## Step 1 — Start Server
+To use this project on multiple devices:
 
-Run:
+- connect all devices to same WiFi
+- run server on one device
+- run client on other devices
+- ensure all clients use the server machine IP
+
+---
+
+# Finding Server IP
+
+Run on server machine:
 
 ```bash
-./server
+hostname -I
 ```
 
 Example:
 
 ```text
-Server IP   : 192.168.1.5
-Server Port : 8080
+192.168.1.5
 ```
 
 ---
 
-## Step 2 — Start Client on Another Device
+# Configure Server IP in client.c
 
-Run:
+Inside `client.c`:
+
+```c
+inet_pton(AF_INET, "192.168.1.5", &serv_addr.sin_addr);
+```
+
+Replace:
+```text
+192.168.1.5
+```
+
+with your actual server IP.
+
+Then rebuild project:
 
 ```bash
-./client
+make
 ```
-
-Enter:
-
-```text
-Enter Server IP: 192.168.1.5
-Enter Name: rahul
-```
-
-Now both devices can communicate.
 
 ---
 
-# Important Notes
+# Firewall Configuration (Ubuntu)
 
-- Both devices must be connected to same WiFi/LAN.
-- Server must stay running while clients connect.
-- Port `8080` should not be blocked by firewall.
-
----
-
-# Allow Firewall Port (Ubuntu)
+Allow port `8080`:
 
 ```bash
 sudo ufw allow 8080
+```
+
+Verify firewall:
+
+```bash
+sudo ufw status
 ```
 
 ---
 
 # Functionalities
 
-## Public Chat
+# Public Messaging
 
-Any normal message gets broadcasted to all connected users.
+Any normal text message gets broadcasted to all connected users.
 
 Example:
 
@@ -232,7 +368,7 @@ Output:
 
 ---
 
-## Private Messaging
+# Private Messaging
 
 Private messages can be sent using:
 
@@ -252,13 +388,15 @@ Output:
 [16:32] (PM) sonu -> rahul: hello bhai
 ```
 
-Private messages are displayed in different color.
+Private messages are visible only to:
+- sender
+- receiver
 
 ---
 
-## Exit Chat
+# Exit Chat
 
-To leave the chat:
+To leave chat:
 
 ```text
 /exit
@@ -282,36 +420,88 @@ To leave the chat:
 
 ---
 
-# Concepts Used
+# Memory Layout Concepts Used
 
-This project demonstrates:
+The project indirectly uses concepts like:
 
-- TCP Socket Programming
-- Client-Server Architecture
+- Stack Memory
+- Heap Memory
 - File Descriptors
-- `select()` System Call
-- Multi-client Handling
-- Network Communication
-- Real-time Chat Systems
+- Buffers
+- Socket Buffers
+- Dynamic Communication Handling
+
+---
+
+# Error Handling Done
+
+The project handles:
+- client disconnections
+- failed connections
+- empty socket reads
+- duplicate message display issue
+- exact username matching
+- private message parsing
+
+---
+
+# Challenges Solved During Development
+
+- Handling multiple clients simultaneously
+- Preventing duplicate terminal messages
+- Exact username matching for private chat
+- Concurrent socket monitoring
+- Real-time terminal updates
+- Managing file descriptors correctly
 
 ---
 
 # Future Improvements
 
-Some possible future upgrades:
+Possible future upgrades:
 
-- File sharing
-- Group chats
+- File transfer support
 - Chat history
-- Encryption
 - Authentication system
 - GUI version
+- Encryption
 - Internet-wide support using ngrok/VPS
+- Group chat system
 - Voice chat
-- WebSocket version
+- epoll() based scalable server
+- Multithreaded implementation
+
+---
+
+# Concepts Demonstrated
+
+This project demonstrates understanding of:
+
+- TCP Socket Programming
+- Linux System Calls
+- Client-Server Communication
+- Networking Fundamentals
+- I/O Multiplexing
+- C Programming
+- Memory Handling
+- Real-time Systems
+- Multi-client Handling
+
+---
+
+# Learning Outcomes
+
+After building this project, concepts learned include:
+
+- how TCP communication works
+- how sockets work internally
+- how Linux handles file descriptors
+- how select() multiplexing works
+- how client-server systems communicate
+- how concurrent networking systems are designed
 
 ---
 
 # Author
 
-Developed as a socket programming and networking project using C.
+Developed as a Linux Socket Programming and Networking project using C.
