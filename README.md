@@ -1,80 +1,212 @@
-# TCP Chat System in C
+# Multi-Client TCP Chat System
 
-A multi-client terminal based chat application developed using **C Socket Programming** and **TCP connections**.
+A terminal-based chat application written in C that uses TCP sockets to connect multiple clients to a central server over a local network or LAN.
 
-The project allows multiple users connected on the same WiFi/LAN network to communicate with each other in real time using a centralized server.
-
-The application demonstrates:
-- Socket Programming
-- TCP Communication
-- Linux System Calls
-- Client-Server Architecture
-- I/O Multiplexing using `select()`
-- Multi-client handling without multithreading
+This project demonstrates core networking concepts such as socket programming, client-server communication, input/output multiplexing with `select()`, and real-time message routing without using threads.
 
 ---
 
-# Project Features
+## 1. Project Overview
 
-- Multi-client chat system
-- Real-time messaging
-- Public chat
-- Private messaging support
-- Join/Disconnect notifications
-- Timestamp based messages
-- Colored terminal output
-- Concurrent client handling using `select()`
-- Dynamic client communication
-- Linux terminal based application
-- Makefile support for easy compilation
+The system consists of two main programs:
+
+- `server.c`: listens for incoming client connections, tracks connected users, and forwards messages.
+- `client.c`: connects to the server, accepts a username, and allows the user to send or receive messages.
+
+The server acts as a central hub for all communication. Messages sent by one client are either:
+
+- broadcast to all connected users, or
+- delivered privately to a specific user.
 
 ---
 
-# Technologies Used
+## 2. Features
 
-- C Programming
-- TCP/IP Networking
-- Linux Socket APIs
-- POSIX System Calls
-- `select()` System Call
-- Makefile
+- Multi-client chat support
+- Real-time public messaging
+- Private messaging using `/msg username message`
+- Join and disconnect notifications
+- Timestamped messages
+- Colored terminal output for readability
+- Dynamic server IP input from the client
+- Simple build workflow with `make`
 
 ---
 
-# Project Structure
+## 3. Architecture
+
+The application follows a classic client-server architecture.
+
+### Server Responsibilities
+
+The server:
+
+- creates a TCP socket
+- binds it to port `8080`
+- listens for incoming connections
+- accepts multiple clients
+- stores usernames and socket descriptors
+- broadcasts public messages
+- sends private messages to the intended recipient
+- handles disconnect events gracefully
+
+### Client Responsibilities
+
+Each client:
+
+- connects to the server using its IP address and port
+- sends a username to the server
+- reads keyboard input and sends messages
+- receives incoming messages from the server
+- can exit using `/exit`
+
+---
+
+## 4. High-Level Data Flow Diagram (DFD)
+
+The following diagram shows the main flow of data between users, client applications, and the server.
+
+```mermaid
+flowchart LR
+    U1[User A] --> C1[Client A]
+    U2[User B] --> C2[Client B]
+    U3[User C] --> C3[Client C]
+
+    C1 --> S[Chat Server]
+    C2 --> S
+    C3 --> S
+
+    S --> C1
+    S --> C2
+    S --> C3
+```
+
+### Level 1 DFD
 
 ```text
-chat_system/
-│
-├── server.c
-├── client.c
-├── Makefile
-├── README.md
+[User] --> [Client Application] --> [TCP Socket]
+                                      |
+                                      v
+                                [Chat Server]
+                                      |
+                                      +--> [Validate / Parse Message]
+                                      +--> [Broadcast to All]
+                                      +--> [Send Private Message]
+                                      +--> [Notify Join/Leave]
+```
+
+### Message Flow
+
+1. A client connects to the server.
+2. The client sends its chosen username.
+3. The server registers the user and announces the join.
+4. When a user sends a message:
+   - a normal message is broadcast to all connected clients
+   - a private message is forwarded only to the target client
+5. When a client disconnects, the server notifies the remaining clients.
+
+---
+
+## 5. Communication Model
+
+The project uses TCP (Transmission Control Protocol), which provides:
+
+- reliable delivery
+- ordered data transmission
+- connection-oriented communication
+
+The server uses `select()` to monitor multiple sockets at once, allowing it to handle many clients without creating a separate thread per client.
+
+### Core Socket Lifecycle
+
+```text
+socket()
+  -> bind()
+  -> listen()
+  -> accept()
+  -> send()/recv()
+  -> close()
 ```
 
 ---
 
-# Prerequisites
+## 6. Project Structure
 
-Before running the project make sure you have:
+```text
+multi-client-chat-system/
+├── server.c
+├── client.c
+├── Makefile
+└── README.md
+```
 
-- GCC Compiler
-- Linux / Ubuntu / WSL
-- Basic terminal knowledge
-- Multiple devices connected to same WiFi (for LAN chat)
+## 7. Code Structure Overview
+
+### Server Side: server.c
+
+The server program is responsible for coordination and message routing.
+
+Key responsibilities:
+
+- creates the listening TCP socket
+- accepts incoming client connections
+- stores each client socket in an array
+- keeps track of usernames for each connected client
+- monitors sockets with `select()`
+- broadcasts normal messages to all users
+- forwards private messages to the intended recipient
+- handles join and disconnect events
+
+### Client Side: client.c
+
+The client program is responsible for local user interaction and communication with the server.
+
+Key responsibilities:
+
+- prompts for the server IP address
+- creates a TCP connection to the server
+- sends the chosen username
+- reads user input from the terminal
+- sends messages to the server
+- receives server messages and displays them
+- exits cleanly when the user types `/exit`
+
+### Basic Interaction Sequence
+
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant Client as Client Program
+    participant Server as Server Program
+
+    User->>Client: Enter server IP and username
+    Client->>Server: Connect and send username
+    Server-->>Client: Acknowledge / announce join
+    User->>Client: Send message
+    Client->>Server: Forward message
+    Server-->>Client: Broadcast or private delivery
+    User->>Client: Type /exit
+    Client->>Server: Close connection
+```
 
 ---
 
-# Install GCC (Ubuntu)
+## 8. Requirements
+
+Before running the project, make sure you have:
+
+- a C compiler such as GCC
+- a Unix-like environment (Linux, Ubuntu, WSL, or macOS)
+- access to the same local network if using multiple machines
+
+### Install GCC on Ubuntu / Debian
 
 ```bash
 sudo apt update
 sudo apt install gcc
 ```
 
----
-
-# Verify GCC Installation
+### Verify installation
 
 ```bash
 gcc --version
@@ -82,322 +214,144 @@ gcc --version
 
 ---
 
-# Understanding Project Architecture
+## 8. Build the Project
 
-The project follows a **Client-Server Architecture**.
-
-## Server Responsibilities
-
-The server:
-- creates a TCP socket
-- binds socket to a port
-- listens for incoming connections
-- accepts multiple clients
-- broadcasts messages
-- handles private messages
-- detects client disconnections
-
-The server uses:
-
-```c
-select()
-```
-
-to monitor multiple sockets simultaneously without using threads.
-
----
-
-## Client Responsibilities
-
-The client:
-- connects to server
-- sends messages
-- receives messages
-- supports private messaging
-- displays colored outputs
-- handles real-time communication
-
----
-
-# Socket Flow
-
-The project internally follows this socket flow:
-
-```text
-socket()
-   ↓
-bind()
-   ↓
-listen()
-   ↓
-accept()
-   ↓
-send()/read()
-   ↓
-close()
-```
-
----
-
-# Important Concepts Used
-
-## TCP Protocol
-
-TCP is used because it provides:
-- reliable communication
-- ordered packet delivery
-- retransmission of lost packets
-- connection-oriented communication
-
----
-
-## select() System Call
-
-The server uses:
-
-```c
-select()
-```
-
-to handle multiple clients simultaneously.
-
-It monitors:
-- new client connections
-- incoming client messages
-
-without multithreading.
-
----
-
-## File Descriptors
-
-Sockets in Linux are represented as:
-- file descriptors
-
-This allows:
-- `select()`
-- `read()`
-- `write()`
-
-to work on sockets like normal files.
-
----
-
-# Compile the Project Using Makefile
-
-## Build Server and Client
+From the project directory, run:
 
 ```bash
 make
 ```
 
-This automatically compiles:
-- server.c
-- client.c
+This builds both executables:
 
----
+- `server`
+- `client`
 
-# Makefile Commands
-
-## Compile Project
+### Available Makefile Targets
 
 ```bash
-make
-```
-
----
-
-## Run Server
-
-```bash
+make          # build both server and client
 make run-server
-```
-
----
-
-## Run Client
-
-```bash
 make run-client
-```
-
----
-
-## Remove Executables
-
-```bash
 make clean
 ```
 
-This removes:
-- server
-- client
-
-executables.
-
 ---
 
-# Running the Project
+## 9. How to Run the Application
 
-# Step 1 — Start Server
+### Step 1: Start the Server
 
-Run:
+Open one terminal and run:
 
 ```bash
 make run-server
 ```
 
-Example output:
+You should see output similar to:
 
 ```text
-=====================================
- Chat Server Started Successfully
-=====================================
-
+Chat Server Started Successfully
 Server IP   : 192.168.1.5
 Server Port : 8080
 
 Waiting for clients...
 ```
 
----
+### Step 2: Start a Client
 
-# Step 2 — Start Client
-
-Open another terminal:
+Open another terminal and run:
 
 ```bash
 make run-client
 ```
 
----
-
-# Step 3 — Enter Server IP
-
-The client dynamically asks for the server IP.
-
-Example:
+The client will prompt for:
 
 ```text
 Enter Server IP: 192.168.1.5
+Enter Name: alice
 ```
 
----
+### Step 3: Send Messages
 
-# Step 4 — Enter Username
-
-Example:
+- Type a normal message to broadcast it to everyone.
+- Use the private message format:
 
 ```text
-Enter Name: sonu
+/msg bob hello
 ```
 
----
-
-# Running on Same WiFi / LAN
-
-To use this project on multiple devices:
-
-- connect all devices to same WiFi
-- run server on one device
-- run client on other devices
-- clients must enter the server machine IP
+- Use `/exit` to leave the chat.
 
 ---
 
-# Finding Server IP
+## 10. Running Across Multiple Devices
 
-Run on server machine:
+To connect clients from different machines:
+
+1. Make sure all devices are on the same Wi-Fi or LAN.
+2. Start the server on one machine.
+3. Run the client on the other machines.
+4. Enter the server machine's IP address when prompted.
+
+### Find the server IP
+
+On the server machine, run:
 
 ```bash
 hostname -I
 ```
 
-Example:
+Example output:
 
 ```text
 192.168.1.5
 ```
 
-This is the IP address clients should enter while connecting.
-
 ---
 
-# Why Dynamic IP Input Is Used
+## 11. Usage Examples
 
-Instead of hardcoding the server IP inside `client.c`,
-the client accepts IP dynamically during runtime.
-
-Advantages:
-- no recompilation required
-- same executable works everywhere
-- easier LAN testing
-- supports future internet/VPS/ngrok connectivity
-- more realistic client-server architecture
-
----
-
-# Connection Flow
-
-```text
-Client Starts
-      ↓
-User Enters Server IP
-      ↓
-Client Creates Socket
-      ↓
-Client Connects To Server
-      ↓
-Username Sent To Server
-      ↓
-Real-Time Communication Starts
-```
-
----
-
-# Firewall Configuration (Ubuntu)
-
-Allow port `8080`:
-
-```bash
-sudo ufw allow 8080
-```
-
-Verify firewall:
-
-```bash
-sudo ufw status
-```
-
----
-
-# Functionalities
-
-# Public Messaging
-
-Any normal text message gets broadcasted to all connected users.
-
-Example:
+### Public Message
 
 ```text
 hello everyone
 ```
 
-Output:
+Server/client output:
 
 ```text
-[16:30] sonu: hello everyone
+[16:30] alice: hello everyone
 ```
+
+### Private Message
+
+```text
+/msg bob hello
+```
+
+This sends the message only to `bob`.
 
 ---
 
-# Private Messaging
+## 12. Notes and Limitations
 
-Private messages can be sent using:
+This is a learning-oriented networking project and is not intended to be a production-grade chat service.
 
-```text
-/msg username message
-```
+Current limitations include:
+
+- fixed port `8080`
+- maximum of `10` clients
+- no authentication or encryption
+- no message persistence or chat history
+- no advanced room/channel support
+
+---
+
+## 13. Summary
+
+This project is a practical introduction to building a real-time, multi-client networked application in C. It highlights how a central server can coordinate communication between many users using sockets and event-driven I/O.
 
 Example:
 
