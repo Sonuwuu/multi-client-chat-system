@@ -85,11 +85,7 @@ int main() {
     setenv("TZ", "Asia/Kolkata", 1);
     tzset();
 
-
-
-    // =================================================
     // AUTOMATIC IP DETECTION
-    // =================================================
 
     char hostbuffer[256];
 
