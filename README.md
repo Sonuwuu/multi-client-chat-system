@@ -479,21 +479,6 @@ After building this project, concepts learned include:
 
 ---
 
-# Interview Topics Covered
-
-This project helps strengthen understanding of:
-- TCP vs UDP
-- File Descriptors
-- select()
-- Client-Server Architecture
-- Linux System Calls
-- Socket Programming
-- Concurrent Client Handling
-- Networking Fundamentals
-- Real-Time Communication
-
----
-
 # Author
 
 Developed as a Linux Socket Programming and Networking project using C.
